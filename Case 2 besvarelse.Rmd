@@ -1,0 +1,67 @@
+---
+title: "Case 2 besvarelse"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(comment=NA)
+```
+
+For å gjennomføre denne besvarelsen tar vi i bruk to pakker. [Tidyverse] (https://github.com/tidyverse/tidyverse) og [Rvest] (https://github.com/tidyverse/rvest). Disse koder vi inn i dokumentet.
+
+```{r}
+library(tidyverse)
+library(rvest)
+```
+
+Deretter laster vi inn dataen fra SSB og gir dette et nytt navn, "tabell"
+
+```{r}
+webpage <- read_html("https://www.ssb.no/a/histstat/aarbok/ht-0901-bnp.html")
+tabell <- html_table(html_nodes(webpage, "table")[[2]])
+```
+
+For å forsikre oss om at all informasjonen er med går vi gjennom både toppen og bunnen av dataen i tabellen og ser på strukturern av variablene og navnene på kolonnene ved bruk av fire kommandoer.
+
+```{r}
+head(tabell)
+tail(tabell)
+str(tabell)
+names(tabell)
+```
+
+Som vi ser har all dataen blitt lastet inn, men vi mangler et par punkter, disse fjerner vi.
+
+```{r}
+tabell <- tabell %>% drop_na()
+```
+
+I tillegg er navnene på kolonnene lite kodevenlig, så disse endrer vi også på.
+
+```{r}
+names(tabell) <- c("År", "BNP", "BNP_endring",
+                   "BNP_percap", "BNP_percap_endring")
+
+tabell <- as_tibble(tabell)
+
+tabell
+```
+Som vi ser er navnene nå slik vi vil ha de men dataen i seg selv må også endres. Her er komma brukt som desimaltegn, vi vil bruke punktum. I tillegg er mellomrom brukt som skille mellom tusen, vi vil fjerne det.
+
+```{r}
+tabell <-
+  tabell %>% 
+  mutate(BNP=str_replace_all(BNP, " ", ""),
+         BNP_endring=na_if(BNP_endring, ""),
+         BNP_percap_endring=na_if(BNP_percap_endring, ""),
+         BNP_endring=str_replace(BNP_endring, ",","."),
+         BNP_percap_endring=str_replace(BNP_percap_endring, ",",".")) %>% 
+  mutate_if(is.character, as.numeric)
+
+tabell
+```
+
+Nå er tabellen slik vi vil ha den, kodevennlig og mer oversiktlig. 
+
+## Oppgave 1
