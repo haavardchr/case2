@@ -65,3 +65,87 @@ tabell
 Nå er tabellen slik vi vil ha den, kodevennlig og mer oversiktlig. 
 
 ## Oppgave 1
+
+For å lage et plot for BNP per innbygger benytter vi oss av ggplot, en funksjon i tidyverse pakken.
+
+```{r}
+tabell %>%
+  ggplot(aes(x=År, y=BNP_percap)) +
+  geom_line(color="red") +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title="BNP Per inbygger",
+       x = "År",
+       y = "kr per innbygger") +
+  theme_bw()
+```
+
+## Oppgave 2
+
+```{r}
+tabell %>% 
+  mutate((BNP * 1000000) / BNP_percap)
+  
+```
+
+
+
+## Oppgave 3
+
+For å benytte oss av BNP tallene til SSB fra 2011 til 2020 er vi nødt til å installere pakken [PxWebApiData] (https://github.com/statisticsnorway/PxWebApiData).
+```{r}
+library(PxWebApiData)
+```
+
+Deretter laster vi inn dataene.
+
+```{r}
+variabler <- ApiData("http://data.ssb.no/api/v0/no/table/09842", returnMetaFrames = TRUE)
+names(variabler)
+
+verdier <- ApiData("https://data.ssb.no/api/v0/no/table/09842/", returnMetaData = TRUE)
+verdier
+```
+Deretter lager vi en ny tabell med dataene fra 2011 til 2020.
+
+```{r}
+tabell2 <- ApiData("https://data.ssb.no/api/v0/no/table/09842/",
+                Tid = paste(2011:2020),
+                ContentsCode = "BNP")
+```
+
+```{r}
+bnp <- tabell2[[1]]
+str(bnp)
+```
+
+Vi gir variablene nye navn, slik at det er lett å legge det inn i den andre tabellen.
+```{r}
+bnp <- bnp %>%
+  rename(År=år) %>% 
+  rename(BNP=value)
+
+  
+bnp <- bnp %>% 
+  mutate(År=parse_number(År)) 
+
+str(bnp)
+```
+Siden oppgaveteksten tilsier at begge tabellene er målt etter 2005 priser, og dette ikke stemmer er vi nødt til å omgjøre verdiene i tabellen for årene 2011 til 2020, fra 2015 priser til 2005 priser.Ifølge [SSB] (https://www.ssb.no/priser-og-prisindekser/konsumpriser/statistikk/konsumprisindeksen) var prisstigningen på 21,5% fra 2005 til 2015, derfor reduserer vi verdiene på tabell to med 21,5%.
+
+```{r}
+bnp <- bnp %>% 
+  mutate(BNP*0.823)
+
+bnp
+
+bnp <- bnp %>% 
+  rename(BNP_percap=BNP*0.823)
+
+bnp
+```
+
+```{r}
+spleis <- bind_rows(tabell, bnp)
+spleis
+```
+
