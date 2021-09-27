@@ -1,6 +1,9 @@
 ---
 title: "Case 2 besvarelse"
-output: pdf_document
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -81,10 +84,12 @@ tabell %>%
 
 ## Oppgave 2
 
+Siden BNP tallene er målt i millioner kroner må vi først gange med en million for å få faktisk BNP verdi, deretter om vi deler på BNP per kapita finner vi ut befolkningen de alle årene, lagret som en ny variabel.
 ```{r}
-tabell %>% 
-  mutate((BNP * 1000000) / BNP_percap)
-  
+tabell <- tabell %>% 
+  mutate(Befolkning=((BNP * 1000000) / BNP_percap))
+
+tabell
 ```
 
 
@@ -105,11 +110,11 @@ names(variabler)
 verdier <- ApiData("https://data.ssb.no/api/v0/no/table/09842/", returnMetaData = TRUE)
 verdier
 ```
-Deretter lager vi en ny tabell med dataene fra 2011 til 2020.
+Deretter lager vi en ny tabell med dataene fra 2012 til 2020.
 
 ```{r}
 tabell2 <- ApiData("https://data.ssb.no/api/v0/no/table/09842/",
-                Tid = paste(2011:2020),
+                Tid = paste(2012:2020),
                 ContentsCode = "BNP")
 ```
 
@@ -122,7 +127,7 @@ Vi gir variablene nye navn, slik at det er lett å legge det inn i den andre tab
 ```{r}
 bnp <- bnp %>%
   rename(År=år) %>% 
-  rename(BNP=value)
+  rename(BNP_percap=value)
 
   
 bnp <- bnp %>% 
@@ -130,20 +135,7 @@ bnp <- bnp %>%
 
 str(bnp)
 ```
-Siden oppgaveteksten tilsier at begge tabellene er målt etter 2005 priser, og dette ikke stemmer er vi nødt til å omgjøre verdiene i tabellen for årene 2011 til 2020, fra 2015 priser til 2005 priser.Ifølge [SSB] (https://www.ssb.no/priser-og-prisindekser/konsumpriser/statistikk/konsumprisindeksen) var prisstigningen på 21,5% fra 2005 til 2015, derfor reduserer vi verdiene på tabell to med 21,5%.
-
-```{r}
-bnp <- bnp %>% 
-  mutate(BNP*0.823)
-
-bnp
-
-bnp <- bnp %>% 
-  rename(BNP_percap=BNP*0.823)
-
-bnp
-```
-
+Så bruker vi bind_rows() kommandoen for å føye inn tallene fra den nye tabellen inn i lag med den gamle. Tallene stemmer ikke helt overens, siden tallene fra tabell to er målt i 2015 verdier, men oppgaven er løst.
 ```{r}
 spleis <- bind_rows(tabell, bnp)
 spleis
